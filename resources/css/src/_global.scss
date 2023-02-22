@@ -1,0 +1,32 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    background-color: #FF8CEF;
+    padding: 50px;
+    font-size: 16px;
+}
+
+.btn {
+    padding: 4px 8px;
+    background-color: #CC2DA2;
+    border: 2px solid #000;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 5px;
+    color: #F4EC5D;
+}
+
+a {
+    color: #F4EC5D;
+    font-weight: 700;
+}
+
+.inline-forms form {
+    display: inline-block;
+}
