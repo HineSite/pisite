@@ -16,20 +16,24 @@ cs = digitalio.DigitalInOut(board.D22)
 # create the mcp object
 mcp = MCP.MCP3008(spi, cs)
 
+resolution = 16
+scale_factor = .33
+tolerance = 1000
+sleep = 0.100
 
 chanx = AnalogIn(mcp, MCP.P2)
 chany = AnalogIn(mcp, MCP.P1)
 chanz = AnalogIn(mcp, MCP.P0)
 
-basex = chanx.value
-basey = chany.value
-basez = chanz.value
+initial_x = chanx.value
+initial_y = chany.value
+initial_z = chanz.value
 
-lastx = basex
-lasty = basey
-lastz = basez
+last_x = initial_x
+last_y = initial_y
+last_z = initial_z
 
-tolerance = 1000
+time.sleep(sleep)
 
 
 def remap(value, from_min, from_max, to_min, to_max):
@@ -42,50 +46,52 @@ def remap(value, from_min, from_max, to_min, to_max):
 
     # Convert the 0-1 range into a value in the right range.
     return int(to_min + (scaled_value * right_span))
+#remap
 
 
 first = True
 while True:
     changed = False
 
-    valx = chanx.value
-    valy = chany.value
-    valz = chanz.value
+    current_x = chanx.value
+    current_y = chany.value
+    current_z = chanz.value
 
-    deltax = abs(valx - lastx)
-    deltay = abs(valy - lasty)
-    deltaz = abs(valz - lastz)
+    delta_x = abs(current_x - last_x)
+    delta_y = abs(current_y - last_y)
+    delta_z = abs(current_z - last_z)
 
-    baseDx = abs(basex - valx)
-    baseDy = abs(basey - valy)
-    baseDz = abs(basez - valz)
+    initial_delta_x = abs(initial_x - current_x)
+    initial_delta_y = abs(initial_y - current_y)
+    initial_delta_z = abs(initial_z - current_z)
 
     # Caculate 360deg values like so: atan2(-yAng, -zAng)
     # atan2 outputs the value of -π to π (radians)
     # We are then converting the radians to degrees
-    mapx = remap(valx, 0, 65535, -90, 90)
-    mapy = remap(valy, 0, 65535, -90, 90)
-    mapz = remap(valz, 0, 65535, -90, 90)
+    remapped_x = remap(current_x, 0, 65535, -90, 90)
+    remapped_y = remap(current_y, 0, 65535, -90, 90)
+    remapped_z = remap(current_z, 0, 65535, -90, 90)
 
-    angx = math.degrees(math.atan2(-mapy, -mapz) + math.pi)
-    angy = math.degrees(math.atan2(-mapx, -mapz) + math.pi)
-    angz = math.degrees(math.atan2(-mapy, -mapx) + math.pi)
+    angle_x = round(math.degrees(math.atan2(-remapped_y, -remapped_z) + math.pi))
+    angle_y = round(math.degrees(math.atan2(-remapped_x, -remapped_z) + math.pi))
+    angle_z = round(math.degrees(math.atan2(-remapped_y, -remapped_x) + math.pi))
 
-    if deltaz > tolerance or deltay > tolerance or deltax > tolerance:
+    if delta_z > tolerance or delta_y > tolerance or delta_x > tolerance:
         changed = True
 
     if changed or first:
-        print('delta (X: {x}, Y: {y}, Z: {z})'.format(x=deltax, y=deltay, z=deltaz))
-        print('actual (X: {x}, Y: {y}, Z: {z})'.format(x=valx, y=valy, z=valz))
-        print('baseD (X: {x}, Y: {y}, Z: {z})'.format(x=baseDx, y=baseDy, z=baseDz))
-        print('mapped (X: {x}, Y: {y}, Z: {z})'.format(x=mapx, y=mapy, z=mapz))
-        print('angle (X: {x}, Y: {y}, Z: {z})'.format(x=angx, y=angy, z=angz))
+        print('delta (X: {x}, Y: {y}, Z: {z})'.format(x=delta_x, y=delta_y, z=delta_z))
+        print('current (X: {x}, Y: {y}, Z: {z})'.format(x=current_x, y=current_y, z=current_z))
+        print('initial delta (X: {x}, Y: {y}, Z: {z})'.format(x=initial_delta_x, y=initial_delta_y, z=initial_delta_z))
+        print('remapped (X: {x}, Y: {y}, Z: {z})'.format(x=remapped_x, y=remapped_y, z=remapped_z))
+        print('angle (X: {x}, Y: {y}, Z: {z})'.format(x=angle_x, y=angle_y, z=angle_z))
         print('')
 
-        lastx = valx
-        lasty = valy
-        lastz = valz
+        last_x = current_x
+        last_y = current_y
+        last_z = current_z
+    #fi
 
     first = False
-
-    time.sleep(0.01)
+    time.sleep(sleep)
+#end_while
