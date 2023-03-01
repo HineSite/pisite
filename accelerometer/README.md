@@ -43,9 +43,11 @@ Then, as the accelerometer is moved, it displays:
 
 
 ### Thoughts
-* I'm using this to detect movement, so I am not too interested in the force measurement at the moment, but here is a good article describing the math behind getting the g-force.
-	`http://physics.wku.edu/phys318/hardware/sensors/adxl335/`
-	The TLDR is, once corrected for the 3.3v (the datasheet is based on 3.0v), the sensor will give you 330mV/g with the 0g at 1.65v.
+* Based on this article describing the math behind getting the g-force: `http://physics.wku.edu/phys318/hardware/sensors/adxl335/`,
+	* TLDR: the accelerometer will output a value from 0v to VCC, 0g will measure <sup>1</sup>/<sub>2</sub> VCC, and will output &plusmn;(<sup>1</sup>/<sub>10</sub> VCC)/g.
+	* For example, if VCC is 3.3v, 0g will measure 1.65v, and &plusmn; .33v for each g (i.e. -1g = 1.32v, 0g = 1.65v, 1g = 1.98v).
+	* To calculate the g-force, I will be using the following formula (where 65535 is the upper value of the resolution from the ADC library I am using): `g = (reading - (65535 * .5)) / (65535 * .1)` or &plusmn; 6553.5/g.
+	
 * Note: Despite being a 10bit ADC, the adafruit mcp3xxx library provides the ADC values in a 16bit range (0 - 65535).
 
 ### Next Steps
