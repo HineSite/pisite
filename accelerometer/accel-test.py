@@ -16,8 +16,7 @@ cs = digitalio.DigitalInOut(board.D22)
 # create the mcp object
 mcp = MCP.MCP3008(spi, cs)
 
-resolution = 16
-scale_factor = .33
+resolution = 65535  # (2 ^ 16 - 1)
 tolerance = 1000
 sleep = 0.100
 
@@ -25,18 +24,18 @@ chanx = AnalogIn(mcp, MCP.P2)
 chany = AnalogIn(mcp, MCP.P1)
 chanz = AnalogIn(mcp, MCP.P0)
 
-initial_x = chanx.value
-initial_y = chany.value
-initial_z = chanz.value
 
-last_x = initial_x
-last_y = initial_y
-last_z = initial_z
-
-time.sleep(sleep)
+def get_value(channel):
+    reading = channel.value
+    return reading - (resolution * .5)
+#get_value
 
 
-def remap(value, from_min, from_max, to_min, to_max):
+def remap(value, to_min, to_max):
+    res = (resolution * .5)
+    from_min = -res
+    from_max = res
+
     # this remaps a value from original range to new range
     left_span = from_max - from_min
     right_span = to_max - to_min
@@ -49,13 +48,23 @@ def remap(value, from_min, from_max, to_min, to_max):
 #remap
 
 
+initial_x = get_value(chanx)
+initial_y = get_value(chany)
+initial_z = get_value(chanz)
+
+last_x = initial_x
+last_y = initial_y
+last_z = initial_z
+
+time.sleep(sleep)
+
 first = True
 while True:
     changed = False
 
-    current_x = chanx.value
-    current_y = chany.value
-    current_z = chanz.value
+    current_x = get_value(chanx)
+    current_y = get_value(chany)
+    current_z = get_value(chanz)
 
     delta_x = abs(current_x - last_x)
     delta_y = abs(current_y - last_y)
@@ -68,9 +77,9 @@ while True:
     # Caculate 360deg values like so: atan2(-yAng, -zAng)
     # atan2 outputs the value of -π to π (radians)
     # We are then converting the radians to degrees
-    remapped_x = remap(current_x, 0, 65535, -90, 90)
-    remapped_y = remap(current_y, 0, 65535, -90, 90)
-    remapped_z = remap(current_z, 0, 65535, -90, 90)
+    remapped_x = remap(current_x, -90, 90)
+    remapped_y = remap(current_y, -90, 90)
+    remapped_z = remap(current_z, -90, 90)
 
     angle_x = round(math.degrees(math.atan2(-remapped_y, -remapped_z) + math.pi))
     angle_y = round(math.degrees(math.atan2(-remapped_x, -remapped_z) + math.pi))
