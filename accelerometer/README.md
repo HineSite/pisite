@@ -1,5 +1,5 @@
 ## Overview
-I bought this accelerometer breakout board years ago (from sparkfun) for another project, it is has been laying around ever since. So I decided it would be fun to make a remote control of it.
+I bought this accelerometer breakout board years ago (from sparkfun) for another project, it is has been lying around ever since. So I decided it would be fun to make a remote control of it.
 I placed the accelerometer, the ADC, and two momentary buttons on a small bread board, arrange in a way that allows it to be held like a game console controller.
 
 
@@ -24,6 +24,8 @@ ACCEL X   to MCP3008 CH2
 ACCEL GND to Pi GND
 ACCEL VCC to Pi 3.3V
 ```
+
+And the momentary buttons will pull GPIO pins 17 (left button) and 27 (the right button) low when pressed.
 
 *P.S. Don't forget to turn SPI on using raspi-config.*
 
