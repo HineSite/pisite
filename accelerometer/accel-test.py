@@ -30,9 +30,9 @@ chanz = AnalogIn(mcp, MCP.P0)
 
 
 def get_value(channel):
-    reading = channel.value
-    return reading - (resolution * .5)
-#get_value
+    # This just needs to shift the value by half to get a range from -32767.5 to 32767.5
+    return channel.value - (resolution * .5)
+# get_value
 
 
 def remap(value, to_min, to_max):
@@ -49,27 +49,27 @@ def remap(value, to_min, to_max):
 
     # Convert the 0-1 range into a value in the right range.
     return int(to_min + (scaled_value * right_span))
-#remap
+# remap
 
 
 def handle_signal(sig, frame):
     GPIO.cleanup()
     sys.exit(0)
-#handle_signal
+# handle_signal
 
 
 def on_button_pressed(channel):
     print_readings()
-#on_button_pressed
+# on_button_pressed
 
 
-initial_x = get_value(chanx)
-initial_y = get_value(chany)
-initial_z = get_value(chanz)
+initial_x = None
+initial_y = None
+initial_z = None
 
-last_x = initial_x
-last_y = initial_y
-last_z = initial_z
+last_x = None
+last_y = None
+last_z = None
 
 
 def print_readings():
@@ -85,6 +85,17 @@ def print_readings():
     current_y = get_value(chany)
     current_z = get_value(chanz)
 
+    if initial_x is None:
+        print("Initial Readings:")
+        initial_x = current_x
+        initial_y = current_y
+        initial_z = current_z
+
+        last_x = current_x
+        last_y = current_y
+        last_z = current_z
+    # fi
+
     delta_x = abs(current_x - last_x)
     delta_y = abs(current_y - last_y)
     delta_z = abs(current_z - last_z)
@@ -93,19 +104,24 @@ def print_readings():
     initial_delta_y = abs(initial_y - current_y)
     initial_delta_z = abs(initial_z - current_z)
 
-    # Caculate 360deg values like so: atan2(-yAng, -zAng)
+    g_x = (current_x / (resolution * .1))
+    g_y = (current_y / (resolution * .1))
+    g_z = (current_z / (resolution * .1))
+
+    # Calculate 360deg values like so: atan2(-yAng, -zAng)
     # atan2 outputs the value of -π to π (radians)
     # We are then converting the radians to degrees
     remapped_x = remap(current_x, -90, 90)
     remapped_y = remap(current_y, -90, 90)
     remapped_z = remap(current_z, -90, 90)
 
-    angle_x = round(math.degrees(math.atan2(-remapped_y, -remapped_z) + math.pi))
-    angle_y = round(math.degrees(math.atan2(-remapped_x, -remapped_z) + math.pi))
-    angle_z = round(math.degrees(math.atan2(-remapped_y, -remapped_x) + math.pi))
+    angle_x = round(math.degrees(math.atan(g_y / g_z)))
+    angle_y = round(math.degrees(math.atan(g_x / g_z)))
+    angle_z = round(math.degrees(math.atan(g_y / g_x)))
 
-    print('delta (X: {x}, Y: {y}, Z: {z})'.format(x=delta_x, y=delta_y, z=delta_z))
     print('current (X: {x}, Y: {y}, Z: {z})'.format(x=current_x, y=current_y, z=current_z))
+    print('g-force (X: {x}, Y: {y}, Z: {z})'.format(x=g_x, y=g_y, z=g_z))
+    print('delta (X: {x}, Y: {y}, Z: {z})'.format(x=delta_x, y=delta_y, z=delta_z))
     print('initial delta (X: {x}, Y: {y}, Z: {z})'.format(x=initial_delta_x, y=initial_delta_y, z=initial_delta_z))
     print('remapped (X: {x}, Y: {y}, Z: {z})'.format(x=remapped_x, y=remapped_y, z=remapped_z))
     print('angle (X: {x}, Y: {y}, Z: {z})'.format(x=angle_x, y=angle_y, z=angle_z))
@@ -117,6 +133,7 @@ def print_readings():
 # print_readings
 
 
+# Get and print initial readings
 print_readings()
 
 
