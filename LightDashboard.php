@@ -26,6 +26,7 @@
 
 
 <a href="/ControlPanel.php">Control Panel</a>
+<a href="/editor/">Editor</a>
 
 
 <?php include __DIR__."/PageParts/MainTheme/Footer.php" ?>
