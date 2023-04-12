@@ -25,8 +25,10 @@
 </div>
 
 
-<a href="/ControlPanel.php">Control Panel</a>
-<a href="/editor/">Editor</a>
+<div class="links">
+    <a href="/ControlPanel.php">Control Panel</a>
+    <a href="/editor/">Editor</a>
+</div>
 
 
 <?php include __DIR__."/PageParts/MainTheme/Footer.php" ?>

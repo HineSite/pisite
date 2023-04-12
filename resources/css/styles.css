@@ -52,9 +52,10 @@ a {
   text-align: center;
   margin-top: 20px;
 }
-.light-dashboard a {
+.light-dashboard .links {
+  display: flex;
+  gap: 20px;
   font-size: 20px;
-  text-align: right;
   position: absolute;
   bottom: 50px;
   right: 50px;
