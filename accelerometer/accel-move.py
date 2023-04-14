@@ -73,23 +73,31 @@ last_z = None
 
 signal.signal(signal.SIGINT, handle_signal)
 
-leds = (3, 10, 17, 24, 31, 38, 45)
-index_y = 0
+leds = (
+    (6, 7, 20, 21, 34, 35, 48),
+    (5, 8, 19, 22, 33, 36, 47),
+    (4, 9, 18, 23, 32, 37, 46),
+    (3, 10, 17, 24, 31, 38, 45),
+    (2, 11, 16, 25, 30, 39, 44),
+    (1, 12, 15, 26, 29, 40, 43),
+    (0, 13, 14, 27, 28, 41, 42)
+)
+index_y = 2
 index_x = 3
 
 led_color = (172, 185, 175)
 pixels.fill((0, 0, 0))
 
-pixels[leds[index_x]] = (255, 0, 0)
+pixels[leds[index_y][index_x]] = (255, 0, 0)
 time.sleep(2)
 
-pixels[leds[index_x]] = (234, 221, 202)
+pixels[leds[index_y][index_x]] = (255, 255, 0)
 time.sleep(2)
 
-pixels[leds[index_x]] = (0, 255, 0)
+pixels[leds[index_y][index_x]] = (0, 255, 0)
 time.sleep(2)
 
-pixels[leds[index_x]] = led_color
+pixels[leds[index_y][index_x]] = led_color
 
 while True:
     current_x = get_value(chanx)
@@ -152,7 +160,7 @@ while True:
     # end_if
 
     pixels.fill((0, 0, 0))
-    pixels[leds[index_x]] = led_color
+    pixels[index_y][leds[index_x]] = led_color
 
     time.sleep(.5)
 # end_while
