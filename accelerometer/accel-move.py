@@ -151,7 +151,7 @@ while True:
         index_x = 6
     # end_if
 
-    #pixels.fill(0, 0, 0)
+    pixels.fill((0, 0, 0))
     pixels[leds[index_x]] = led_color
 
     time.sleep(.5)
