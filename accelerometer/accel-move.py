@@ -57,10 +57,9 @@ def get_value(channel):
 
 
 def handle_signal(sig, frame):
+    pixels.fill((0, 0, 0))
     GPIO.cleanup()
     sys.exit(0)
-
-
 # handle_signal
 
 
@@ -79,12 +78,18 @@ index_y = 0
 index_x = 3
 
 led_color = (172, 185, 175)
-pixels.fill(255, 0, 0)
+pixels.fill((0, 0, 0))
+
+pixels[leds[index_x]] = (255, 0, 0)
 time.sleep(2)
-pixels.fill(234, 221, 202)
+
+pixels[leds[index_x]] = (234, 221, 202)
 time.sleep(2)
-pixels.fill(0, 255, 0)
+
+pixels[leds[index_x]] = (0, 255, 0)
 time.sleep(2)
+
+pixels[leds[index_x]] = led_color
 
 while True:
     current_x = get_value(chanx)
