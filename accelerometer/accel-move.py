@@ -82,7 +82,7 @@ leds = (
     (1, 12, 15, 26, 29, 40, 43),
     (0, 13, 14, 27, 28, 41, 42)
 )
-index_y = 2
+index_y = 3
 index_x = 3
 
 led_color = (172, 185, 175)
@@ -135,8 +135,7 @@ while True:
     print('g-force (X: {x}, Y: {y}, Z: {z})'.format(x=g_x, y=g_y, z=g_z))
     print('delta (X: {x}, Y: {y}, Z: {z})'.format(x=delta_x, y=delta_y, z=delta_z))
     print('initial delta (X: {x}, Y: {y}, Z: {z})'.format(x=initial_delta_x, y=initial_delta_y, z=initial_delta_z))
-    print('angle (X: {x}, Y: {y}, Z: {z})'.format(x=angle_x, y=angle_y,
-                                                  z=angle_z))  # -y: Tilted to Left | +y: Titled to Right | -x: Tilted Twards User | +x: Tilted away from User
+    print('angle (X: {x}, Y: {y}, Z: {z})'.format(x=angle_x, y=angle_y, z=angle_z))  # -y: Tilted to Left | +y: Titled to Right | -x: Tilted Twards User | +x: Tilted away from User
     print('')
 
     last_x = current_x
@@ -159,8 +158,26 @@ while True:
         index_x = 6
     # end_if
 
-    pixels.fill((0, 0, 0))
-    pixels[index_y][leds[index_x]] = led_color
 
-    time.sleep(.5)
+
+    if angle_x > 10:
+        index_y += 1
+    # end_if
+
+    if angle_x < -10:
+        index_y -= 1
+    # end_if
+
+    if index_y < 0:
+        index_y = 0
+    # end_if
+
+    if index_y > 6:
+        index_y = 6
+    # end_if
+
+    pixels.fill((0, 0, 0))
+    pixels[leds[index_y][index_x]] = led_color
+
+    time.sleep(.2)
 # end_while
