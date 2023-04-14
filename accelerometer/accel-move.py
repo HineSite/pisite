@@ -73,6 +73,7 @@ last_z = None
 
 signal.signal(signal.SIGINT, handle_signal)
 
+angle_thresh = 5
 leds = (
     (6, 7, 20, 21, 34, 35, 48),
     (5, 8, 19, 22, 33, 36, 47),
@@ -142,11 +143,11 @@ while True:
     last_y = current_y
     last_z = current_z
 
-    if angle_y > 10:
+    if angle_y > angle_thresh:
         index_x += 1
     # end_if
 
-    if angle_y < -10:
+    if angle_y < -angle_thresh:
         index_x -= 1
     # end_if
 
@@ -159,12 +160,11 @@ while True:
     # end_if
 
 
-
-    if angle_x > 10:
+    if angle_x > angle_thresh:
         index_y -= 1
     # end_if
 
-    if angle_x < -10:
+    if angle_x < -angle_thresh:
         index_y += 1
     # end_if
 
