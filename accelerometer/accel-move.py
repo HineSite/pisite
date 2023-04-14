@@ -161,11 +161,11 @@ while True:
 
 
     if angle_x > 10:
-        index_y += 1
+        index_y -= 1
     # end_if
 
     if angle_x < -10:
-        index_y -= 1
+        index_y += 1
     # end_if
 
     if index_y < 0:
