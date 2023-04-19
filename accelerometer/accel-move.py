@@ -10,6 +10,9 @@ import RPi.GPIO as GPIO
 import signal
 import sys
 import neopixel
+from enum import Enum
+from copy import copy
+import random
 
 # create the spi bus
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -21,9 +24,6 @@ cs = digitalio.DigitalInOut(board.D22)
 mcp = MCP.MCP3008(spi, cs)
 
 resolution = 65535  # (2 ^ 16 - 1)
-tolerance = 1000
-sleep = 0.100
-
 chanx = AnalogIn(mcp, MCP.P2)
 chany = AnalogIn(mcp, MCP.P1)
 chanz = AnalogIn(mcp, MCP.P0)
@@ -48,11 +48,35 @@ def setup_leds():
 setup_leds()
 
 
+class Segment:
+    x = 0
+    y = 0
+    color = (0, 0, 0)
+
+    def __init__(self, x, y, color):
+        self.x = x
+        self.y = y
+        self.color = color
+    # end_init
+
+    def __copy__(self):
+        return type(self)(self.x, self.y, self.color)
+    # end_copy
+# end_segment
+
+
+class Direction(Enum):
+    NONE = 0
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
+# end_direction
+
+
 def get_value(channel):
     # This just needs to shift the value by half to get a range from -32767.5 to 32767.5
     return channel.value - (resolution * .5)
-
-
 # get_value
 
 
@@ -63,18 +87,26 @@ def handle_signal(sig, frame):
 # handle_signal
 
 
-initial_x = None
-initial_y = None
-initial_z = None
+def on_button_pressed(channel):
+    print('Start Snake')
+    start_game()
+# on_button_pressed
 
-last_x = None
-last_y = None
-last_z = None
 
-signal.signal(signal.SIGINT, handle_signal)
+_segment_color = (44, 82, 18)
+_head_color = (0, 145, 0)
+_red = (255, 0, 0)
+_yellow = (155, 155, 0)
+_green = (0, 255, 0)
+_clear = (0, 0, 0)
+_direction = Direction.NONE
+_angle_thresh = 0
+_update_speed = 0
+_apples_per_level = 0
+_total_apples = 0
 
-angle_thresh = 5
-leds = (
+_segments = []
+_leds = (
     (6, 7, 20, 21, 34, 35, 48),
     (5, 8, 19, 22, 33, 36, 47),
     (4, 9, 18, 23, 32, 37, 46),
@@ -83,101 +115,284 @@ leds = (
     (1, 12, 15, 26, 29, 40, 43),
     (0, 13, 14, 27, 28, 41, 42)
 )
-index_y = 3
-index_x = 3
+_segments.append(Segment(3, 3, _head_color))
+#_segments.append(Segment(3, 2, _segment_color))
+#_segments.append(Segment(3, 1, _segment_color))
+_apple = ()
+_apples = 0
 
-led_color = (172, 185, 175)
-pixels.fill((0, 0, 0))
+_numbers = (
+    ((1, 1), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5), (2, 4), (2, 3), (2, 2), (2, 1)),
+    ((2, 1), (2, 2), (2, 3), (2, 4), (2, 5)),
+    ((0, 1), (1, 1), (2, 1), (2, 2), (2, 3), (1, 3), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5)),
+    ((0, 1), (1, 1), (2, 1), (2, 2), (2, 3), (1, 3), (0, 3), (2, 4), (2, 5), (1, 5), (0, 5)),
+    ((2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (0, 1), (0, 2), (0, 3), (1, 3)),
+    ((0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (2, 4), (2, 5), (1, 5), (0, 5), (1, 1), (2, 1)),
+    ((2, 1), (1, 1), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5), (2, 4), (2, 3), (1, 3), (0, 3)),
+    ((0, 1), (1, 1), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5)),
+    ((0, 1), (1, 1), (2, 1), (2, 2), (2, 3), (1, 3), (0, 4), (0, 5), (1, 5), (2, 5), (2, 4), (0, 3), (0, 2)),
+    ((2, 1), (1, 1), (0, 1), (0, 2), (0, 3), (1, 3), (2, 3), (2, 2), (2, 4), (2, 5), (1, 5), (0, 5))
+)
 
-pixels[leds[index_y][index_x]] = (255, 0, 0)
-time.sleep(2)
 
-pixels[leds[index_y][index_x]] = (255, 255, 0)
-time.sleep(2)
+def place_apple():
+    global _apple
+    collision = True
+    x = 3
+    y = 3
 
-pixels[leds[index_y][index_x]] = (0, 255, 0)
-time.sleep(2)
-
-pixels[leds[index_y][index_x]] = led_color
-
-while True:
-    current_x = get_value(chanx)
-    current_y = get_value(chany)
-    current_z = get_value(chanz)
-
-    if initial_x is None:
-        print("Initial Readings:")
-        initial_x = current_x
-        initial_y = current_y
-        initial_z = current_z
-
-        last_x = current_x
-        last_y = current_y
-        last_z = current_z
-    # fi
-
-    delta_x = abs(current_x - last_x)
-    delta_y = abs(current_y - last_y)
-    delta_z = abs(current_z - last_z)
-
-    initial_delta_x = abs(initial_x - current_x)
-    initial_delta_y = abs(initial_y - current_y)
-    initial_delta_z = abs(initial_z - current_z)
-
-    g_x = (current_x / (resolution * .1))
-    g_y = (current_y / (resolution * .1))
-    g_z = (current_z / (resolution * .1))
-
-    angle_x = round(math.degrees(math.atan(g_y / g_z)))
-    angle_y = round(math.degrees(math.atan(g_x / g_z)))
-    angle_z = round(math.degrees(math.atan(g_y / g_x)))
-
-    print('current (X: {x}, Y: {y}, Z: {z})'.format(x=current_x, y=current_y, z=current_z))
-    print('g-force (X: {x}, Y: {y}, Z: {z})'.format(x=g_x, y=g_y, z=g_z))
-    print('delta (X: {x}, Y: {y}, Z: {z})'.format(x=delta_x, y=delta_y, z=delta_z))
-    print('initial delta (X: {x}, Y: {y}, Z: {z})'.format(x=initial_delta_x, y=initial_delta_y, z=initial_delta_z))
-    print('angle (X: {x}, Y: {y}, Z: {z})'.format(x=angle_x, y=angle_y, z=angle_z))  # -y: Tilted to Left | +y: Titled to Right | -x: Tilted Twards User | +x: Tilted away from User
-    print('')
-
-    last_x = current_x
-    last_y = current_y
-    last_z = current_z
-
-    if angle_y > angle_thresh:
-        index_x += 1
+    # clear the previous apple
+    if len(_apple) == 3:
+        activate_led(_apple[0], _apple[1], _clear)
     # end_if
 
-    if angle_y < -angle_thresh:
-        index_x -= 1
+    while collision:
+        x = random.randint(0, 6)
+        y = random.randint(0, 6)
+        collision = False
+
+        for segment in _segments:
+            if segment.x == x and segment.y == y:
+                collision = True
+                break
+            # end_if
+        # end_for
+    # end_while
+
+    _apple = (x, y, _red)
+# place_apple
+
+
+def activate_led(x, y, color):
+    # If the x, y location is within the array
+    if x >= 0 and x <= 6 and y >= 0 and y <= 6:
+        pixels[_leds[y][x]] = color
+    # end_if
+# activate_led
+
+
+def draw_number(number, color):
+    if number > 9:
+        # 2 digits
+        digit1 = number // 10
+        digit2 = number % 10
+
+        for led in _numbers[digit1]:
+            activate_led(led[0], led[1], color)
+        # end_for
+
+        for led in _numbers[digit2]:
+            activate_led(led[0] + 4, led[1], color)
+        # end_for
+    else:
+        for led in _numbers[number]:
+            activate_led(led[0] + 2, led[1], color)
+        # end_for
+    # end_if
+# draw_number
+
+
+def show_start_sequence():
+    pixels.fill(_clear)
+
+    draw_number(3, _yellow)
+    time.sleep(1)
+    pixels.fill(_clear)
+
+    draw_number(2, _yellow)
+    time.sleep(1)
+    pixels.fill(_clear)
+
+    draw_number(1, _yellow)
+    time.sleep(1)
+    pixels.fill(_clear)
+
+    activate_led(_segments[0].x, _segments[0].y, _segment_color)
+# show_start_sequence
+
+
+def show_end_sequence(out_of_bounds):
+    if out_of_bounds:
+        # The head is off the screen, so we need to make sure all lefs are the segment color
+        for segment in _segments:
+            activate_led(segment.x, segment.y, _segment_color)
+        # end_for
+
+        while len(_segments) > 0:
+            segment = _segments.pop(0)
+            activate_led(segment.x, segment.y, _clear)
+
+            time.sleep(_update_speed)
+        # end_while
+    else:
+        time.sleep(.5)
     # end_if
 
-    if index_x < 0:
-        index_x = 0
-    # end_if
 
-    if index_x > 6:
-        index_x = 6
-    # end_if
+    pixels.fill(_clear)
+    draw_number(_total_apples, _red)
+    time.sleep(6)
+    pixels.fill(_clear)
+# show_end_sequence
 
 
-    if angle_x > angle_thresh:
-        index_y -= 1
-    # end_if
+def show_level_sequence():
+    time.sleep(.8)
+    pixels.fill(_clear)
+# show_level_sequence
 
-    if angle_x < -angle_thresh:
-        index_y += 1
-    # end_if
 
-    if index_y < 0:
-        index_y = 0
-    # end_if
+def reset_snake():
+    global _direction
 
-    if index_y > 6:
-        index_y = 6
-    # end_if
+    _direction = Direction(random.randint(2, 4))
+    _segments.clear()
+    _segments.append(Segment(3, 3, _head_color))
+# reset_board
 
-    pixels.fill((0, 0, 0))
-    pixels[leds[index_y][index_x]] = led_color
 
-    time.sleep(.2)
-# end_while
+def reset_board():
+    global _apples
+    global _direction
+    global _angle_thresh
+    global _update_speed
+    global _apples_per_level
+    global _total_apples
+
+    _apples = 0
+    _angle_thresh = 5
+    _update_speed = .5
+    _apples_per_level = 5
+    _total_apples = 0
+
+    reset_snake()
+# reset_board
+
+
+def start_game():
+    global _apples
+    global _direction
+    global _update_speed
+    global _apples_per_level
+    global _total_apples
+
+    reset_board()
+    show_start_sequence()
+    place_apple()
+
+    while True:
+        g_x = (get_value(chanx) / (resolution * .1))
+        g_y = (get_value(chany) / (resolution * .1))
+        g_z = (get_value(chanz) / (resolution * .1))
+
+        angle_x = round(math.degrees(math.atan(g_y / g_z)))
+        angle_y = round(math.degrees(math.atan(g_x / g_z)))
+
+        # Movement is only allowed on one axis at a time (i.e. diagonal movement is not allowed).
+        # Reverse movement is not allowed.
+        # Once movement has started, stopping is not allowed.
+
+        if math.fabs(angle_y) > math.fabs(angle_x):
+            if angle_y > _angle_thresh and _direction != Direction.LEFT:
+                _direction = Direction.RIGHT
+            elif angle_y < -_angle_thresh and _direction != Direction.RIGHT:
+                _direction = Direction.LEFT
+            # end_if
+        elif math.fabs(angle_y) < math.fabs(angle_x):
+            if angle_x > _angle_thresh and _direction != Direction.DOWN:
+                _direction = Direction.UP
+            elif angle_x < -_angle_thresh and _direction != Direction.UP:
+                _direction = Direction.DOWN
+            # end_if
+        # end_if
+
+        # Use the last segment as the start location for the next segment
+        new_segment = copy(_segments[-1])
+
+        if _direction == Direction.UP:
+            new_segment.y -= 1
+        elif _direction == Direction.DOWN:
+            new_segment.y += 1
+        elif _direction == Direction.LEFT:
+            new_segment.x -= 1
+        elif _direction == Direction.RIGHT:
+            new_segment.x += 1
+        # end_if
+
+        # If the position of the segment is outside the bounds of the board, then the game is over.
+        if new_segment.x < 0 or new_segment.x > 6 or new_segment.y < 0 or new_segment.y > 6:
+            show_end_sequence(True)
+            return
+        # end_if
+
+        # The game is also over if the snake runs into its self
+        for segment in _segments:
+            if segment.x == new_segment.x and segment.y == new_segment.y:
+                show_end_sequence(False)
+                return
+            # end_if
+        # end_for
+
+        _segments[-1].color = _segment_color
+        _segments.append(new_segment)
+
+        # Check for apple collision
+        new_level = False
+        if new_segment.x == _apple[0] and new_segment.y == _apple[1]:
+            # Update apple tallies
+            # Place a new apple
+            # Do not remove snake segment because the snake is now longer.
+
+            _apples += 1
+            _total_apples += 1
+            _update_speed -= .01
+
+            place_apple()
+
+            if _apples >= _apples_per_level:
+                new_level = True
+            # end_if
+        else:
+            # If the snake did not eat an apple, we remove the first segment.
+            # This is because we recreate the snake head for every movement.
+            # The last segment in the list is always the snakes head, therefore we remove the first segment.
+            activate_led(_segments[0].x, _segments[0].y, _clear)
+            _segments.pop(0)
+        # end_if
+
+        # draw the apple and snake
+        if not new_level:
+            activate_led(_apple[0], _apple[1], _apple[2])  # Don't draw the apple if going to a new level
+        # end_if
+
+        for segment in _segments:
+            activate_led(segment.x, segment.y, segment.color)
+        # end_for
+
+        if new_level:
+            _apples = 0
+            _apples_per_level += 1
+            pause = True
+
+            show_level_sequence()
+            reset_snake()
+            show_start_sequence()
+            continue
+        # end_if
+
+        time.sleep(_update_speed)
+    # end_while
+# start_game
+
+
+# Button setup
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.add_event_detect(17, GPIO.FALLING, callback=on_button_pressed, bouncetime=250)
+
+signal.signal(signal.SIGINT, handle_signal)
+signal.pause()
+
+GPIO.cleanup()
+
