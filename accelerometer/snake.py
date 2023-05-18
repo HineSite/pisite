@@ -1,4 +1,3 @@
-import os
 import time
 import busio
 import digitalio
@@ -7,8 +6,6 @@ from adafruit_mcp3xxx.analog_in import AnalogIn
 import math
 import board
 import RPi.GPIO as GPIO
-import signal
-import sys
 import neopixel
 from enum import Enum
 from copy import copy
@@ -80,19 +77,6 @@ def get_value(channel):
 # get_value
 
 
-def handle_signal(sig, frame):
-    pixels.fill((0, 0, 0))
-    GPIO.cleanup()
-    sys.exit(0)
-# handle_signal
-
-
-def on_button_pressed(channel):
-    print('Start Snake')
-    start_game()
-# on_button_pressed
-
-
 _segment_color = (44, 82, 18)
 _head_color = (0, 145, 0)
 _red = (255, 0, 0)
@@ -116,8 +100,6 @@ _leds = (
     (0, 13, 14, 27, 28, 41, 42)
 )
 _segments.append(Segment(3, 3, _head_color))
-#_segments.append(Segment(3, 2, _segment_color))
-#_segments.append(Segment(3, 1, _segment_color))
 _apple = ()
 _apples = 0
 
@@ -149,14 +131,7 @@ def place_apple():
     while collision:
         x = random.randint(0, 6)
         y = random.randint(0, 6)
-        collision = False
-
-        for segment in _segments:
-            if segment.x == x and segment.y == y:
-                collision = True
-                break
-            # end_if
-        # end_for
+        collision = snake_collides_with(x, y)
     # end_while
 
     _apple = (x, y, _red)
@@ -248,7 +223,18 @@ def reset_snake():
     _direction = Direction(random.randint(2, 4))
     _segments.clear()
     _segments.append(Segment(3, 3, _head_color))
-# reset_board
+# reset_snake
+
+
+def snake_collides_with(x, y):
+    for segment in _segments:
+        if segment.x == x and segment.y == y:
+            return True
+        # end_if
+    # end_for
+
+    return False
+# snake_collides_with
 
 
 def reset_board():
@@ -262,137 +248,117 @@ def reset_board():
     _apples = 0
     _angle_thresh = 5
     _update_speed = .5
-    _apples_per_level = 5
+    _apples_per_level = 8
     _total_apples = 0
 
     reset_snake()
 # reset_board
 
 
-def start_game():
-    global _apples
-    global _direction
-    global _update_speed
-    global _apples_per_level
-    global _total_apples
+reset_board()
+show_start_sequence()
+place_apple()
 
-    reset_board()
-    show_start_sequence()
-    place_apple()
+while True:
+    g_x = (get_value(chanx) / (resolution * .1))
+    g_y = (get_value(chany) / (resolution * .1))
+    g_z = (get_value(chanz) / (resolution * .1))
 
-    while True:
-        g_x = (get_value(chanx) / (resolution * .1))
-        g_y = (get_value(chany) / (resolution * .1))
-        g_z = (get_value(chanz) / (resolution * .1))
+    angle_x = round(math.degrees(math.atan(g_y / g_z)))
+    angle_y = round(math.degrees(math.atan(g_x / g_z)))
 
-        angle_x = round(math.degrees(math.atan(g_y / g_z)))
-        angle_y = round(math.degrees(math.atan(g_x / g_z)))
+    # Movement is only allowed on one axis at a time (i.e. diagonal movement is not allowed).
+    # Reverse movement is not allowed.
+    # Once movement has started, stopping is not allowed.
 
-        # Movement is only allowed on one axis at a time (i.e. diagonal movement is not allowed).
-        # Reverse movement is not allowed.
-        # Once movement has started, stopping is not allowed.
-
-        if math.fabs(angle_y) > math.fabs(angle_x):
-            if angle_y > _angle_thresh and _direction != Direction.LEFT:
-                _direction = Direction.RIGHT
-            elif angle_y < -_angle_thresh and _direction != Direction.RIGHT:
-                _direction = Direction.LEFT
-            # end_if
-        elif math.fabs(angle_y) < math.fabs(angle_x):
-            if angle_x > _angle_thresh and _direction != Direction.DOWN:
-                _direction = Direction.UP
-            elif angle_x < -_angle_thresh and _direction != Direction.UP:
-                _direction = Direction.DOWN
-            # end_if
+    if math.fabs(angle_y) > math.fabs(angle_x):
+        if angle_y > _angle_thresh and _direction != Direction.LEFT:
+            _direction = Direction.RIGHT
+        elif angle_y < -_angle_thresh and _direction != Direction.RIGHT:
+            _direction = Direction.LEFT
         # end_if
-
-        # Use the last segment as the start location for the next segment
-        new_segment = copy(_segments[-1])
-
-        if _direction == Direction.UP:
-            new_segment.y -= 1
-        elif _direction == Direction.DOWN:
-            new_segment.y += 1
-        elif _direction == Direction.LEFT:
-            new_segment.x -= 1
-        elif _direction == Direction.RIGHT:
-            new_segment.x += 1
+    elif math.fabs(angle_y) < math.fabs(angle_x):
+        if angle_x > _angle_thresh and _direction != Direction.DOWN:
+            _direction = Direction.UP
+        elif angle_x < -_angle_thresh and _direction != Direction.UP:
+            _direction = Direction.DOWN
         # end_if
+    # end_if
 
-        # If the position of the segment is outside the bounds of the board, then the game is over.
-        if new_segment.x < 0 or new_segment.x > 6 or new_segment.y < 0 or new_segment.y > 6:
-            show_end_sequence(True)
-            return
+    # Use the last segment as the start location for the next segment
+    new_segment = copy(_segments[-1])
+
+    if _direction == Direction.UP:
+        new_segment.y -= 1
+    elif _direction == Direction.DOWN:
+        new_segment.y += 1
+    elif _direction == Direction.LEFT:
+        new_segment.x -= 1
+    elif _direction == Direction.RIGHT:
+        new_segment.x += 1
+    # end_if
+
+    # If the position of the segment is outside the bounds of the board, then the game is over.
+    if new_segment.x < 0 or new_segment.x > 6 or new_segment.y < 0 or new_segment.y > 6:
+        show_end_sequence(True)
+        break
+    # end_if
+
+    # The game is also over if the snake runs into its self
+    if snake_collides_with(new_segment.x, new_segment.y):
+        show_end_sequence(False)
+        break
+    # end_if
+
+    _segments[-1].color = _segment_color
+    _segments.append(new_segment)
+
+    # Check for apple collision
+    new_level = False
+    if new_segment.x == _apple[0] and new_segment.y == _apple[1]:
+        # Update apple tallies
+        # Place a new apple
+        # Do not remove snake segment because the snake is now longer.
+
+        _apples += 1
+        _total_apples += 1
+        _update_speed -= .01
+
+        place_apple()
+
+        if _apples >= _apples_per_level:
+            new_level = True
         # end_if
+    else:
+        # If the snake did not eat an apple, we remove the first segment.
+        # This is because we recreate the snake head for every movement.
+        # The last segment in the list is always the snakes head, therefore we remove the first segment.
+        activate_led(_segments[0].x, _segments[0].y, _clear)
+        _segments.pop(0)
+    # end_if
 
-        # The game is also over if the snake runs into its self
-        for segment in _segments:
-            if segment.x == new_segment.x and segment.y == new_segment.y:
-                show_end_sequence(False)
-                return
-            # end_if
-        # end_for
+    # draw the apple and snake
+    if not new_level:
+        activate_led(_apple[0], _apple[1], _apple[2])  # Don't draw the apple if going to a new level
+    # end_if
 
-        _segments[-1].color = _segment_color
-        _segments.append(new_segment)
+    for segment in _segments:
+        activate_led(segment.x, segment.y, segment.color)
+    # end_for
 
-        # Check for apple collision
-        new_level = False
-        if new_segment.x == _apple[0] and new_segment.y == _apple[1]:
-            # Update apple tallies
-            # Place a new apple
-            # Do not remove snake segment because the snake is now longer.
+    if new_level:
+        _apples = 0
+        _apples_per_level += 3
+        pause = True
 
-            _apples += 1
-            _total_apples += 1
-            _update_speed -= .01
+        show_level_sequence()
+        reset_snake()
+        show_start_sequence()
+        continue
+    # end_if
 
-            place_apple()
+    time.sleep(_update_speed)
+# end_while
 
-            if _apples >= _apples_per_level:
-                new_level = True
-            # end_if
-        else:
-            # If the snake did not eat an apple, we remove the first segment.
-            # This is because we recreate the snake head for every movement.
-            # The last segment in the list is always the snakes head, therefore we remove the first segment.
-            activate_led(_segments[0].x, _segments[0].y, _clear)
-            _segments.pop(0)
-        # end_if
-
-        # draw the apple and snake
-        if not new_level:
-            activate_led(_apple[0], _apple[1], _apple[2])  # Don't draw the apple if going to a new level
-        # end_if
-
-        for segment in _segments:
-            activate_led(segment.x, segment.y, segment.color)
-        # end_for
-
-        if new_level:
-            _apples = 0
-            _apples_per_level += 1
-            pause = True
-
-            show_level_sequence()
-            reset_snake()
-            show_start_sequence()
-            continue
-        # end_if
-
-        time.sleep(_update_speed)
-    # end_while
-# start_game
-
-
-# Button setup
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-GPIO.add_event_detect(17, GPIO.FALLING, callback=on_button_pressed, bouncetime=250)
-
-signal.signal(signal.SIGINT, handle_signal)
-signal.pause()
 
 GPIO.cleanup()
-
