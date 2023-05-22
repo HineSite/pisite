@@ -194,7 +194,10 @@ def get_high_score():
     # end_if
 
     with open(high_scores_file, 'r') as handle:
-        return int(handle.read())
+        value = handle.read()
+        if len(value) == 0:
+            return 0
+        return int(value)
     # end_with
 # get_high_score
 
