@@ -206,7 +206,7 @@ def save_high_score(new_score):
 
     with open(high_scores_file, 'r+') as handle:
         handle.truncate()
-        handle.write(new_score)
+        handle.write(str(new_score))
     #end_with
 # save_high_score
 
