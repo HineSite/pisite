@@ -1,3 +1,4 @@
+import os
 import time
 import busio
 import digitalio
@@ -25,6 +26,7 @@ chanx = AnalogIn(mcp, MCP.P2)
 chany = AnalogIn(mcp, MCP.P1)
 chanz = AnalogIn(mcp, MCP.P0)
 
+high_scores_file = './high-score-snake.txt'
 pixels = None
 
 
@@ -171,19 +173,50 @@ def show_start_sequence():
     pixels.fill(_clear)
 
     draw_number(3, _yellow)
-    time.sleep(1)
+    time.sleep(.8)
     pixels.fill(_clear)
 
     draw_number(2, _yellow)
-    time.sleep(1)
+    time.sleep(.8)
     pixels.fill(_clear)
 
     draw_number(1, _yellow)
-    time.sleep(1)
+    time.sleep(.8)
     pixels.fill(_clear)
 
     activate_led(_segments[0].x, _segments[0].y, _segment_color)
 # show_start_sequence
+
+
+def get_high_score():
+    if not os.path.exists(high_scores_file):
+        return 0
+    # end_if
+
+    with open(high_scores_file, 'r') as handle:
+        return int(handle.read())
+    # end_with
+# get_high_score
+
+
+def save_high_score(new_score):
+    if not os.path.exists(high_scores_file):
+        os.mknod(high_scores_file)
+    # end_if
+
+    with open(high_scores_file, 'r+') as handle:
+        handle.truncate()
+        handle.write(new_score)
+    #end_with
+# save_high_score
+
+
+def show_high_score():
+    high_score = get_high_score()
+    pixels.fill(_clear)
+    draw_number(high_score, _yellow)
+    time.sleep(2)
+# show_high_score
 
 
 def show_end_sequence(out_of_bounds):
@@ -203,9 +236,15 @@ def show_end_sequence(out_of_bounds):
         time.sleep(.5)
     # end_if
 
+    score_color = _red
+    high_score = get_high_score()
+    if _total_apples > high_score:
+        score_color = _green
+        save_high_score(_total_apples)
+    # end_if
 
     pixels.fill(_clear)
-    draw_number(_total_apples, _red)
+    draw_number(_total_apples, score_color)
     time.sleep(6)
     pixels.fill(_clear)
 # show_end_sequence
@@ -255,6 +294,7 @@ def reset_board():
 # reset_board
 
 
+show_high_score()
 reset_board()
 show_start_sequence()
 place_apple()
