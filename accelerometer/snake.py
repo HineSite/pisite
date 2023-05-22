@@ -214,7 +214,7 @@ def save_high_score(new_score):
 def show_high_score():
     high_score = get_high_score()
     pixels.fill(_clear)
-    draw_number(high_score, _yellow)
+    draw_number(high_score, _segment_color)
     time.sleep(2)
 # show_high_score
 
