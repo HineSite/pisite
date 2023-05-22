@@ -81,9 +81,9 @@ def get_value(channel):
 
 _segment_color = (44, 82, 18)
 _head_color = (0, 145, 0)
-_red = (255, 0, 0)
+_red = (190, 0, 0)
 _yellow = (155, 155, 0)
-_green = (0, 255, 0)
+_green = (0, 190, 0)
 _clear = (0, 0, 0)
 _direction = Direction.NONE
 _angle_thresh = 0
