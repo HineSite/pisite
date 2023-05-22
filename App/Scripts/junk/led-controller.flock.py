@@ -3,32 +3,13 @@ import os
 import time
 import json
 from array import array
+from led_color import Color
 
 try:
     import RPi.GPIO as GPIO
 except ModuleNotFoundError:
     print("nope")
 # end_try
-
-
-class Color:
-    R: int = 0
-    G: int = 0
-    B: int = 0
-    A: int = 25
-
-    def __init__(self, r: int, g: int, b: int, a: int = 25):
-        self.R = r
-        self.G = g
-        self.B = b
-        self.A = a
-    # end_init
-
-    def array(self) -> array[int]:
-        return self.R, self.G, self.B, self.A
-    # end_init
-# end_color
-
 
 class LedController:
     __filename = "/tmp/led-controller.state"
