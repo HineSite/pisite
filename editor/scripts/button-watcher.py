@@ -1,8 +1,5 @@
 import time
-import board
 import RPi.GPIO as GPIO
-import subprocess
-import psutil
 
 launcher_pin = 23
 launcher_pin_state = 0
@@ -20,9 +17,13 @@ while True:
     if GPIO.input(launcher_pin):
         launcher_pin_state = 0
     else:
-        if launcher_pin_state is 0:
+        if launcher_pin_state == 0:
             launcher_pin_state = 1
-            exec(open("/home/pi/launcher_btn_press.py").read())
+            try:
+                exec(open("/home/pi/launcher_btn_press.py").read())
+            finally:
+                pass
+            # end_try
         # end_if
     # end_ if
 
@@ -31,9 +32,13 @@ while True:
     if GPIO.input(accel_left_btn_pin):
         accel_left_btn_pin_state = 0
     else:
-        if accel_left_btn_pin_state is 0:
+        if accel_left_btn_pin_state == 0:
             accel_left_btn_pin_state = 1
-            exec(open("/home/pi/accel_left_btn_press.py").read())
+            try:
+                exec(open("/home/pi/accel_left_btn_press.py").read())
+            finally:
+                pass
+            # end_try
         # end_if
     # end_ if
 
