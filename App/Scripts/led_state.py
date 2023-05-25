@@ -39,11 +39,11 @@ class LedState:
         self.led_state[led.id] = led
 
         if _has_pixels:
-            self.pixels[id] = (
-                round(led.r * led.a),
-                round(led.g * led.a),
-                round(led.b * led.a)
-            )
+            r = round(led.r * led.a)
+            g = round(led.g * led.a)
+            b = round(led.b * led.a)
+
+            self.pixels[led.id] = (r, g, b)
         # end_if
     # set_by_id
 # LedState
