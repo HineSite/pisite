@@ -38,6 +38,8 @@ if led.r != 0 or led.g != 0 or led.b != 0 or led.a != .1:
     print('Failed to clear colors, got led: {c}'.format(c=led.to_string()))
     sys.exit(1)
 
+print('LedState Passed...')
+
 #
 #
 #
@@ -84,6 +86,8 @@ led = controller.get(26)
 if led.r != 0 or led.g != 0 or led.b != 0 or led.a != .1:
     print('Failed to clear colors, got led: {c}'.format(c=led.to_string()))
     sys.exit(1)
+
+print('LedController Passed...')
 
 
 

@@ -8,6 +8,7 @@ from led import Led
 # This server is intended to run on startup and never stop
 # It listens for requests to get or set the state of the LEDs.
 
+debug = True if len(sys.argv) > 1 and sys.argv[1] == 'debug' else False
 
 led_state = None
 write_server = None
@@ -32,44 +33,58 @@ def handle_signal(sig, frame):
 signal.signal(signal.SIGINT, handle_signal)
 
 
+def debug(message):
+    if debug:
+        print(message)
+    # end_if
+# debug
+
+
 async def handle_write(reader, writer):
+    debug('Write request received')
+
     message = ''
-    while True:
-        data = await reader.read(led_sockets.chunk_size)
-        if data:
-            message += data.decode('ascii')
-        else:
-            writer.close()
-            await writer.wait_closed()
-            break
-        # end_if
-    # end_while
+    data = await reader.readline()
+    if data and len(data) > 1:
+        message += data[:-1].decode('ascii')
+        debug('Write request: {m}'.format(m=message))
+    else:
+        debug('Write request failed (no data): {d}'.format(d=data))
+    # end_if
+
+    writer.close()
+    await writer.wait_closed()
 
     if message == 'clear':
+        debug('Clearing leds')
         led_state.clear()
     elif len(message) > 0:
+        debug('Parsing parts to write led state')
         parts = message.split('|')
         for part in parts:
             led = Led.deserialize(part)
             led_state.set(led)
         # end_for
     # end_if
+
+    debug('Write request complete')
 # handle_write
 
 
 async def handle_read(reader, writer):
+    debug('Read request received')
     try:
         message = ''
-        while True:
-            data = await reader.read(led_sockets.chunk_size)
-            if data:
-                message += data.decode('ascii')
-            else:
-                break
-            # end_if
-        # end_while
+        data = await reader.readline()
+        if data and len(data) > 1:
+            message += data[:-1].decode('ascii')
+            debug('Read request: {m}'.format(m=message))
+        else:
+            debug('Read request failed (no data): {d}'.format(d=data))
+        # end_if
 
         if len(message) > 0:
+            debug('Parsing parts to read led state')
             results = ''
             parts = message.split('|')
             for part in parts:
@@ -80,6 +95,7 @@ async def handle_read(reader, writer):
                 results += led.serialize()
             # end_for
 
+            debug('Sending led states to client: {r}'.format(r=results))
             writer.write(bytes(results, 'ascii'))
         # end_if
 
@@ -90,6 +106,8 @@ async def handle_read(reader, writer):
         writer.close()
         await writer.wait_closed()
     # end_try
+
+    debug('Read request complete')
 # handle_read
 
 
@@ -97,6 +115,8 @@ async def main():
     global led_state
     global write_server
     global read_server
+
+    debug('Server Started')
 
     led_state = LedState()
     write_server = await asyncio.start_unix_server(handle_write, led_sockets.write_address)

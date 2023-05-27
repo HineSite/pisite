@@ -5,6 +5,8 @@ from led import Led
 
 
 class LedController:
+    _eol = '\n'  # just don't run it on windows...
+
     def __init__(self):
         pass
     # __init__
@@ -15,7 +17,7 @@ class LedController:
         try:
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.connect(address)
-            sock.sendall(bytes(message, 'ascii'))
+            sock.sendall(bytes(message + self._eol, 'ascii'))
             sock.shutdown(socket.SHUT_WR)
 
             response = ''

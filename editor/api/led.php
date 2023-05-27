@@ -49,7 +49,7 @@ class Led
             r:intval($parts[1]),
             g:intval($parts[2]),
             b:intval($parts[3]),
-            a:intval($parts[4])
+            a:floatval($parts[4])
         );
     }
 }
