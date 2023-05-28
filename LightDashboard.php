@@ -55,11 +55,11 @@
 
         spammer = true;
         $.ajax({
-            url: '/App/Light.php?action=update&leds=' + JSON.stringify(leds),
+            url: './App/Light.php?action=update&leds=' + JSON.stringify(leds),
             type: 'GET',
             success: function(res) {
                 for (const led of leds) {
-                    $(`[data-id='${led.id}'`).css('background-color', `rgb(${led.color[0]}, ${led.color[1]}, ${led.color[2]})`);
+                    $(`[data-id='${led.id}']`).css('background-color', `rgb(${led.color[0]}, ${led.color[1]}, ${led.color[2]})`);
                 }
 
                 setTimeout(() => {
