@@ -1,6 +1,6 @@
 <?php
 
-require_once "./led-controller.php";
+require_once "./LedController.php";
 
 $EOL = (php_sapi_name() === 'cli' ? PHP_EOL : "<br>");
 
