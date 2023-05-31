@@ -4,8 +4,8 @@ require_once "./Led.php";
 
 class LedController
 {
-    private static $_writeAddress = './Scripts/led-socket-write';  // socket used to listen for write requests
-    private static $_readAddress = './Scripts/led-socket-read';  // socket used to listed for read requests
+    private static $_writeAddress = '/var/www/html/App/Scripts/led-socket-write';  // socket used to listen for write requests
+    private static $_readAddress = '/var/www/html/App/Scripts/led-socket-read';  // socket used to listed for read requests
 
     private $_debug = false;
     private $_eof = "";
