@@ -4,11 +4,11 @@ require_once "./Led.php";
 
 class LedController
 {
-    private static string $_writeAddress = './Scripts/led-socket-write';  // socket used to listen for write requests
-    private static string $_readAddress = './Scripts/led-socket-read';  // socket used to listed for read requests
+    private static $_writeAddress = './Scripts/led-socket-write';  // socket used to listen for write requests
+    private static $_readAddress = './Scripts/led-socket-read';  // socket used to listed for read requests
 
-    private bool $_debug = false;
-    private string $_eof = "";
+    private $_debug = false;
+    private $_eof = "";
 
     public function __construct(bool $debug = false)
     {
@@ -16,11 +16,11 @@ class LedController
         $this->_eof = (php_sapi_name() === 'cli' ? PHP_EOL : "<br>");
     }
 
-    private function connect(string $address, string $message): string | null
+    private function connect(string $address, string $message): ?string
     {
         $socket = null;
         try {
-            $socket = fsockopen("unix://{$address}", error_code: $errorCode, error_message: $errorMessage);
+            $socket = fsockopen("unix://{$address}", -1, $errorCode, $errorMessage);
             if (!$socket) {
                 $this->debug("Socket error on {$address}. Error ($errorCode): {$errorMessage}");
             } else {
@@ -58,7 +58,7 @@ class LedController
         return true;
     }
 
-    private function read(string $message): array | null
+    private function read(string $message): ?array
     {
         $this->debug("Sending read request to server: {$message}");
 
@@ -99,7 +99,7 @@ class LedController
         return $this->write('clear');
     }
 
-    public function get(int $id): Led | null
+    public function get(int $id): ?Led
     {
         $leds = $this->read(strval($id));
         if (empty($leds))
@@ -108,7 +108,7 @@ class LedController
         return $leds[0];
     }
 
-    public function readAll(): array | null
+    public function readAll(): ?array
     {
         return $this->read('all');
     }
