@@ -35,7 +35,7 @@ signal.signal(signal.SIGINT, handle_signal)
 
 
 def debug(message):
-    if debug:
+    if debug == True:
         print(message)
     # end_if
 # debug
