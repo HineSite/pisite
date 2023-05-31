@@ -52,4 +52,15 @@ class Led
             a:floatval($parts[4])
         );
     }
+
+    public static function fromArray(array $data): Led | null
+    {
+        return new Led(
+            id:(is_numeric($data[0]) ? intval($data[0]) : null),
+            r:intval($data[1]),
+            g:intval($data[2]),
+            b:intval($data[3]),
+            a:floatval($data[4])
+        );
+    }
 }

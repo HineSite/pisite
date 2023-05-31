@@ -34,36 +34,39 @@
 <?php include __DIR__."/PageParts/MainTheme/Footer.php" ?>
 
 <script type="text/javascript">//<![CDATA[
-    const leds = [];
-    let spammer = false;
+    let _spammer = false;
 
-    // Build default led state array
-    $('.dashboard .light').each(function (i) {
-        let id = $(this).data('id');
-        leds.push({
-            id: id,
-            color: [0,0,0]
-        });
-    });
-
-    // Set the default state on load
-    sendState();
-    function sendState() {
-        if (spammer) {
-            return;
-        }
-
-        spammer = true;
+    readState();
+    function readState() {
         $.ajax({
-            url: './App/Light.php?action=update&leds=' + JSON.stringify(leds),
+            url: './App/Light.php?action=read',
             type: 'GET',
+            dataType: 'json',
             success: function(res) {
-                for (const led of leds) {
-                    $(`[data-id='${led.id}']`).css('background-color', `rgb(${led.color[0]}, ${led.color[1]}, ${led.color[2]})`);
+                for (const led of res) {
+                    $(`[data-id='${led.id}']`).css('background-color', `rgb(${led.r}, ${led.g}, ${led.b})`);
                 }
 
                 setTimeout(() => {
-                    spammer = false;
+                    readState()
+                }, 100);
+            }
+        });
+    }
+
+    function sendState(action, leds) {
+        if (_spammer) {
+            return;
+        }
+
+        _spammer = true;
+        $.ajax({
+            url: './App/Light.php?action=' + action + '&leds=' + JSON.stringify(leds),
+            type: 'GET',
+            success: function(res) {
+                console.log(res);
+                setTimeout(() => {
+                    _spammer = false;
                 }, 500);
             }
         });
@@ -73,47 +76,38 @@
         let light = $(this);
         let id = light.data('id');
 
-        let hex = prompt('What is your Hex?');
+        let hex = prompt('Enter a color (hex, rgb, or name)');
         if (hex != null) {
             let rgb = hexToRGB(hex);
             if (rgb == null) {
-                alert('Invalid Hex (e.g. #C7DAD7)')
+                alert('Invalid or Unknown Color')
 
                 return;
             }
 
-            for (const led of leds) {
-                if (led.id === id) {
-                    led.color = rgb;
-                    break;
-                }
-            }
-
-            sendState();
+            sendState('write', [id].concat(rgb));
         }
     });
 
     function clearDashboard() {
-        for (const led of leds) {
-            led.color = [0,0,0]
-        }
-
-        sendState();
+        sendState('clear');
     }
 
     function randomizeDashboard() {
-        for (const led of leds) {
-            led.color = getRandoRgb();
+        let leds = [];
+        for (let i = 0; i < 50; i++) {
+            leds.push([i].concat(getRandoRgb()));
         }
 
-        sendState();
+        sendState('write', leds);
     }
 
     function getRandoRgb() {
         return [
             getRando(0, 255),
             getRando(0, 255),
-            getRando(0, 255)
+            getRando(0, 255),
+            .1
         ];
     }
 
@@ -134,14 +128,14 @@
             let g = parseInt(hex.substr(2, 2), 16);
             let b = parseInt(hex.substr(4, 2), 16);
 
-            return [r, g, b];
+            return [r, g, b, .1];
         }
         else if (hex.length === 3) {
             let r = parseInt(hex[0] + '' + hex[0], 16);
             let g = parseInt(hex[1] + '' + hex[1], 16);
             let b = parseInt(hex[2] + '' + hex[2], 16);
 
-            return [r, g, b];
+            return [r, g, b, .1];
         }
 
         return null;

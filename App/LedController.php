@@ -1,12 +1,11 @@
 <?php
 
-require_once "./led.php";
+require_once "./Led.php";
 
 class LedController
 {
-    private static string $_writeAddress = '/tmp/led-socket-write';  // socket used to listen for write requests
-    private static string $_readAddress = '/tmp/led-socket-read';  // socket used to listed for read requests
-    private static int $_chunkSite = 2048;
+    private static string $_writeAddress = './Scripts/led-socket-write';  // socket used to listen for write requests
+    private static string $_readAddress = './Scripts/led-socket-read';  // socket used to listed for read requests
 
     private bool $_debug = false;
     private string $_eof = "";
@@ -81,9 +80,18 @@ class LedController
         return $leds;
     }
 
-    public function set(Led $led): bool
+    public function set(array $leds): bool
     {
-        return $this->write($led->serialize());
+        $message = '';
+        foreach ($leds as $led) {
+            if (strlen($message) > 0) {
+                $message .= '|';
+            }
+
+            $message .= $led->serialize();
+        }
+
+        return $this->write($message);
     }
 
     public function clear(): bool
@@ -100,9 +108,9 @@ class LedController
         return $leds[0];
     }
 
-    public function get_all(): array
+    public function readAll(): array | null
     {
-        return $this->read('');
+        return $this->read('all');
     }
 
     private function debug(string $message, string $stacktrace = null)

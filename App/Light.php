@@ -1,16 +1,31 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+
+require_once "./LedController.php";
+
+$controller = new LedController();
 
 $action = $_GET['action'];
 if ($action == 'write') {
-    $led = $_GET['led'];
-    $color = explode(',', $_GET['color']);
+    $ledString = json_decode($_GET['leds']);
 
-    echo shell_exec("sudo python3 ./Scripts/led-state.py write ${led} ${color[0]} ${color[1]} ${color[2]}");
+    $leds = [];
+    if (is_array($ledString[0])) {
+        foreach ($ledString as $led) {
+            $leds[] = Led::fromArray($led);
+        }
+    }
+    else {
+        $leds[] = Led::fromArray($ledString);
+    }
+
+    $controller->set($leds);
 }
-else if ($action == 'update') {
-    $leds = $_GET['leds'];
-
-    echo shell_exec("sudo python3 ./Scripts/led-state.py update '${leds}'");
-    //echo "sudo python3 ./Scripts/led-state.py update '${leds}'";
-
+if ($action == 'clear') {
+    $controller->clear();
+}
+else if ($action == 'read') {
+    $leds = $controller->readAll();
+    echo  json_encode($leds);
 }
