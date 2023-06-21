@@ -306,21 +306,16 @@ def get_move_direction():
     angle_y = round(math.degrees(math.atan(g_x / g_z)))
 
     # If you tilt the board past 90 degrees, the snake will move in the opposite direction of the tilt.
-    if angle_x > 45:
-        angle_x = 45
-    # end_if
+    # When tilting the domain from 0 to 89 degrees, after 89 it wraps back to zero. Which is causing the problem.
 
-    if angle_x < -45:
-        angle_x = -45
-    # end_if
+    # angle_y
+    # from 0 to 89: tilt right
+    # from 0 to -89: tilt left
 
-    if angle_y > 45:
-        angle_y = 45
-    # end_if
+    # angle_x
+    # from 0 to 89: tilt up
+    # from 0 to -89: tilt down
 
-    if angle_y < -45:
-        angle_y = -45
-    # end_if
 
     # Movement is only allowed on one axis at a time (i.e. diagonal movement is not allowed).
     # Reverse movement is not allowed.
