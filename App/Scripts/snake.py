@@ -282,12 +282,7 @@ def reset_board():
 # reset_board
 
 
-show_high_score()
-reset_board()
-show_start_sequence()
-place_apple()
-
-while True:
+def get_move_direction():
     g_x = (get_value(chanx) / (resolution * .1))
     g_y = (get_value(chany) / (resolution * .1))
     g_z = (get_value(chanz) / (resolution * .1))
@@ -295,23 +290,47 @@ while True:
     angle_x = round(math.degrees(math.atan(g_y / g_z)))
     angle_y = round(math.degrees(math.atan(g_x / g_z)))
 
+    # If you tilt the board past 90 degrees, the snake will move in the opposite direction of the tilt.
+    # When tilting the domain from 0 to 89 degrees, after 89 it wraps back to zero. Which is causing the problem.
+
+    # angle_y
+    # from 0 to 89: tilt right
+    # from 0 to -89: tilt left
+
+    # angle_x
+    # from 0 to 89: tilt up
+    # from 0 to -89: tilt down
+
+
     # Movement is only allowed on one axis at a time (i.e. diagonal movement is not allowed).
     # Reverse movement is not allowed.
     # Once movement has started, stopping is not allowed.
 
     if math.fabs(angle_y) > math.fabs(angle_x):
         if angle_y > _angle_thresh and _direction != Direction.LEFT:
-            _direction = Direction.RIGHT
+            return Direction.RIGHT
         elif angle_y < -_angle_thresh and _direction != Direction.RIGHT:
-            _direction = Direction.LEFT
+            return Direction.LEFT
         # end_if
     elif math.fabs(angle_y) < math.fabs(angle_x):
         if angle_x > _angle_thresh and _direction != Direction.DOWN:
-            _direction = Direction.UP
+            return Direction.UP
         elif angle_x < -_angle_thresh and _direction != Direction.UP:
-            _direction = Direction.DOWN
+            return Direction.DOWN
         # end_if
     # end_if
+
+    return _direction
+# get_move_direction
+
+
+show_high_score()
+reset_board()
+show_start_sequence()
+place_apple()
+
+while True:
+    _direction = get_move_direction()
 
     # Use the last segment as the start location for the next segment
     new_segment = copy(_segments[-1])
