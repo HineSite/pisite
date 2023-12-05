@@ -5,12 +5,14 @@ import digitalio
 import adafruit_mcp3xxx.mcp3008 as MCP
 from adafruit_mcp3xxx.analog_in import AnalogIn
 import math
-import board
 import RPi.GPIO as GPIO
-import neopixel
 from enum import Enum
 from copy import copy
 import random
+import board
+from led_controller import LedController
+
+led_controller = LedController()
 
 # create the spi bus
 spi = busio.SPI(clock=board.SCK, MISO=board.MISO, MOSI=board.MOSI)
@@ -27,25 +29,6 @@ chany = AnalogIn(mcp, MCP.P1)
 chanz = AnalogIn(mcp, MCP.P0)
 
 high_scores_file = './high-score-snake.txt'
-pixels = None
-
-
-def setup_leds():
-    global pixels
-
-    # You should not modify anything in here...
-    PIXEL_PIN = board.D18
-    NUM_PIXELS = 50
-    ORDER = neopixel.RGB
-
-    pixels = neopixel.NeoPixel(
-        PIXEL_PIN, NUM_PIXELS, brightness=.1, auto_write=True, pixel_order=ORDER
-    )
-# setupLeds
-
-
-setup_leds()
-
 
 class Segment:
     x = 0
@@ -143,7 +126,7 @@ def place_apple():
 def activate_led(x, y, color):
     # If the x, y location is within the array
     if x >= 0 and x <= 6 and y >= 0 and y <= 6:
-        pixels[_leds[y][x]] = color
+        led_controller.set(_leds[y][x], color[0], color[1], color[2])
     # end_if
 # activate_led
 
@@ -170,19 +153,19 @@ def draw_number(number, color):
 
 
 def show_start_sequence():
-    pixels.fill(_clear)
+    led_controller.clear()
 
     draw_number(3, _yellow)
     time.sleep(.8)
-    pixels.fill(_clear)
+    led_controller.clear()
 
     draw_number(2, _yellow)
     time.sleep(.8)
-    pixels.fill(_clear)
+    led_controller.clear()
 
     draw_number(1, _yellow)
     time.sleep(.8)
-    pixels.fill(_clear)
+    led_controller.clear()
 
     activate_led(_segments[0].x, _segments[0].y, _segment_color)
 # show_start_sequence
@@ -216,7 +199,7 @@ def save_high_score(new_score):
 
 def show_high_score():
     high_score = get_high_score()
-    pixels.fill(_clear)
+    led_controller.clear()
     draw_number(high_score, _segment_color)
     time.sleep(2)
 # show_high_score
@@ -246,16 +229,16 @@ def show_end_sequence(out_of_bounds):
         save_high_score(_total_apples)
     # end_if
 
-    pixels.fill(_clear)
+    led_controller.clear()
     draw_number(_total_apples, score_color)
     time.sleep(6)
-    pixels.fill(_clear)
+    led_controller.clear()
 # show_end_sequence
 
 
 def show_level_sequence():
     time.sleep(.8)
-    pixels.fill(_clear)
+    led_controller.clear()
 # show_level_sequence
 
 
